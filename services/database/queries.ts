@@ -84,3 +84,57 @@ export const getFacilityById = async (
 
   return mapRowToFacility(row);
 };
+
+// Debug helper functions
+export const debugDatabase = async (db: SQLite.SQLiteDatabase) => {
+  const facilityCount = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM facilities"
+  );
+  const amenityCount = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM amenities"
+  );
+  const relationCount = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM facility_amenities"
+  );
+
+  console.log("📊 Database Stats:");
+  console.log(`  Facilities: ${facilityCount?.count || 0}`);
+  console.log(`  Amenities: ${amenityCount?.count || 0}`);
+  console.log(`  Relations: ${relationCount?.count || 0}`);
+
+  // Sample data
+  const sampleFacilities = await db.getAllAsync(
+    "SELECT * FROM facilities LIMIT 3"
+  );
+  const sampleAmenities = await db.getAllAsync(
+    "SELECT * FROM amenities LIMIT 5"
+  );
+
+  console.log("\n🏢 Sample Facilities:");
+  console.log(JSON.stringify(sampleFacilities, null, 2));
+
+  console.log("\n🎯 Sample Amenities:");
+  console.log(JSON.stringify(sampleAmenities, null, 2));
+
+  return {
+    counts: {
+      facilities: facilityCount?.count || 0,
+      amenities: amenityCount?.count || 0,
+      relations: relationCount?.count || 0,
+    },
+    samples: {
+      facilities: sampleFacilities,
+      amenities: sampleAmenities,
+    },
+  };
+};
+
+export const runCustomQuery = async (
+  db: SQLite.SQLiteDatabase,
+  query: string,
+  params: any[] = []
+) => {
+  const result = await db.getAllAsync(query, ...params);
+  console.log("Query Result:", JSON.stringify(result, null, 2));
+  return result;
+};

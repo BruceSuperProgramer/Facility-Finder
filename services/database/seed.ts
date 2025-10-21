@@ -18,7 +18,7 @@ export const seedDatabase = async (
   await db.withTransactionAsync(async () => {
     // Step 2: Insert amenities
     const amenityStatement = await db.prepareAsync(
-      "INSERT OR IGNORE INTO amenities (name) VALUES (?)"
+      "INSERT OR REPLACE INTO amenities (name) VALUES (?)"
     );
 
     try {

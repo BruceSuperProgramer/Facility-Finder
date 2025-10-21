@@ -5,16 +5,17 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { SQLiteProvider } from "expo-sqlite";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { DatabaseProvider } from "@/hooks/use-database";
+import { initializeDatabase } from "@/services/database";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <DatabaseProvider>
+    <SQLiteProvider databaseName="facilities.db" onInit={initializeDatabase}>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <Stack>
           <Stack.Screen
@@ -34,6 +35,6 @@ export default function RootLayout() {
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
-    </DatabaseProvider>
+    </SQLiteProvider>
   );
 }

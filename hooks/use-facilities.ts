@@ -1,7 +1,11 @@
 import { useReducer, useEffect, useCallback, useRef } from "react";
-import { useDatabase } from "@/hooks/use-database";
+import { useSQLiteContext } from "expo-sqlite";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getFacilitiesPaginated, getFacilityById } from "@/services/database";
+import {
+  getFacilitiesPaginated,
+  getFacilityById,
+  logDatabaseLocation,
+} from "@/services/database";
 import type {
   FacilitiesState,
   FacilitiesAction,
@@ -84,17 +88,19 @@ const facilitiesReducer = (
 };
 
 export const useFacilities = () => {
-  const { db } = useDatabase();
+  const db = useSQLiteContext();
   const [state, dispatch] = useReducer(facilitiesReducer, initialState);
 
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(true);
 
+  useEffect(() => {
+    logDatabaseLocation();
+  }, []);
+
   // Unified fetch function - used for initial, search, pagination, and refresh
   const fetchFacilities = useCallback(
     async (offset: number, append: boolean, searchQuery: string) => {
-      if (!db) return;
-
       try {
         const facilities = await getFacilitiesPaginated(
           db,
@@ -124,7 +130,6 @@ export const useFacilities = () => {
 
   // Debounced search handler
   const debouncedSearch = useDebounce(() => {
-    if (!db) return;
     dispatch({ type: "FETCH_START" });
     offsetRef.current = 0;
     hasMoreRef.current = true;
@@ -133,8 +138,6 @@ export const useFacilities = () => {
 
   // Handle search query changes
   useEffect(() => {
-    if (!db) return;
-
     // If search query is empty, fetch immediately without debounce
     if (state.searchQuery === "") {
       dispatch({ type: "FETCH_START" });
@@ -145,7 +148,7 @@ export const useFacilities = () => {
       // Otherwise debounce the search
       debouncedSearch();
     }
-  }, [state.searchQuery, db, debouncedSearch, fetchFacilities]);
+  }, [state.searchQuery, debouncedSearch, fetchFacilities]);
 
   // Load more handler
   const loadMore = useCallback(async () => {
@@ -164,13 +167,13 @@ export const useFacilities = () => {
 
   // Refresh handler
   const refetch = useCallback(async () => {
-    if (!db || state.isLoading) return;
+    if (state.isLoading) return;
 
     dispatch({ type: "REFETCH_START" });
     offsetRef.current = 0;
     hasMoreRef.current = true;
     await fetchFacilities(0, false, state.searchQuery);
-  }, [db, state.isLoading, state.searchQuery, fetchFacilities]);
+  }, [state.isLoading, state.searchQuery, fetchFacilities]);
 
   // Search query setter
   const setSearchQuery = useCallback((query: string) => {
@@ -231,11 +234,11 @@ const facilityReducer = (
 };
 
 export const useFacility = (id: string) => {
-  const { db } = useDatabase();
+  const db = useSQLiteContext();
   const [state, dispatch] = useReducer(facilityReducer, initialFacilityState);
 
   const fetchData = useCallback(async () => {
-    if (!db || !id) return;
+    if (!id) return;
 
     try {
       dispatch({ type: "FETCH_START" });
@@ -250,15 +253,15 @@ export const useFacility = (id: string) => {
   }, [db, id]);
 
   useEffect(() => {
-    if (db && id) {
+    if (id) {
       fetchData();
     }
-  }, [db, id, fetchData]);
+  }, [id, fetchData]);
 
   const refetch = useCallback(async () => {
-    if (!db || !id) return;
+    if (!id) return;
     await fetchData();
-  }, [db, id, fetchData]);
+  }, [id, fetchData]);
 
   return {
     data: state.data,
