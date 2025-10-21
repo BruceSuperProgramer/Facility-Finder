@@ -1,7 +1,11 @@
 import { useReducer, useEffect, useCallback, useRef } from "react";
 import { useSQLiteContext } from "expo-sqlite";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getFacilitiesPaginated, getFacilityById } from "@/services/database";
+import {
+  getFacilitiesPaginated,
+  getFacilityById,
+  logDatabaseLocation,
+} from "@/services/database";
 import type {
   FacilitiesState,
   FacilitiesAction,
@@ -89,6 +93,10 @@ export const useFacilities = () => {
 
   const offsetRef = useRef(0);
   const hasMoreRef = useRef(true);
+
+  useEffect(() => {
+    logDatabaseLocation();
+  }, []);
 
   // Unified fetch function - used for initial, search, pagination, and refresh
   const fetchFacilities = useCallback(
