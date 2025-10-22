@@ -1,7 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import { seedDatabase } from "./seed";
 
-const DB_NAME = "facilities.db";
+export const DB_NAME = "facilities.db";
 
 export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   return await SQLite.openDatabaseAsync(DB_NAME);
