@@ -8,3 +8,8 @@ export interface Facility {
   };
   facilities: string[];
 }
+
+export interface Amenity {
+  id: number;
+  name: string;
+}

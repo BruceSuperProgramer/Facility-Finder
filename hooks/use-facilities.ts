@@ -1,17 +1,18 @@
-import { useReducer, useEffect, useCallback, useRef } from "react";
-import { useSQLiteContext } from "expo-sqlite";
 import { useDebounce } from "@/hooks/use-debounce";
+import type {
+  FacilitiesAction,
+  FacilitiesState,
+  FacilityAction,
+  FacilityState,
+} from "@/hooks/use-facilities.types";
 import {
+  getAmenities,
   getFacilitiesPaginated,
-  getFacilityById,
   logDatabaseLocation,
 } from "@/services/database";
-import type {
-  FacilitiesState,
-  FacilitiesAction,
-  FacilityState,
-  FacilityAction,
-} from "@/hooks/use-facilities.types";
+import { Amenity } from "@/services/models/facility.types";
+import { useSQLiteContext } from "expo-sqlite";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 const PAGE_SIZE = 20;
 
@@ -233,41 +234,23 @@ const facilityReducer = (
   }
 };
 
-export const useFacility = (id: string) => {
+export const useAmenities = () => {
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
   const db = useSQLiteContext();
-  const [state, dispatch] = useReducer(facilityReducer, initialFacilityState);
-
-  const fetchData = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      dispatch({ type: "FETCH_START" });
-      const facility = await getFacilityById(db, id);
-      dispatch({ type: "FETCH_SUCCESS", payload: facility });
-    } catch (err) {
-      dispatch({
-        type: "FETCH_ERROR",
-        payload: err instanceof Error ? err : new Error("Unknown error"),
-      });
-    }
-  }, [db, id]);
 
   useEffect(() => {
-    if (id) {
-      fetchData();
-    }
-  }, [id, fetchData]);
-
-  const refetch = useCallback(async () => {
-    if (!id) return;
-    await fetchData();
-  }, [id, fetchData]);
+    const fetchAmenities = async () => {
+      try {
+        const amenities = await getAmenities(db);
+        setAmenities(amenities);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchAmenities();
+  }, [db]);
 
   return {
-    data: state.data,
-    isLoading: state.isLoading,
-    isError: state.isError,
-    error: state.error,
-    refetch,
+    amenities,
   };
 };

@@ -1,20 +1,22 @@
-import {
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  TextInput,
-} from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import { router } from "expo-router";
-import { useCallback } from "react";
-import { Ionicons } from "@expo/vector-icons";
+import { Bubble } from "@/components/bubble";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useFacilities } from "@/hooks/use-facilities";
+import { useAmenities, useFacilities } from "@/hooks/use-facilities";
 import type { Facility } from "@/services/database";
+import { Ionicons } from "@expo/vector-icons";
+import { FlashList } from "@shopify/flash-list";
+import { router } from "expo-router";
+import { useCallback } from "react";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 
 export default function FacilityListScreen() {
   const colorScheme = useColorScheme();
@@ -175,8 +177,28 @@ export default function FacilityListScreen() {
     refetch,
   ]);
 
-  return (
-    <ThemedView style={styles.container}>
+  const { amenities } = useAmenities();
+
+  const renderBubbles = useCallback(() => {
+    return (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.bubblesContainer}
+      >
+        {amenities.map((amenity) => (
+          <Bubble
+            key={amenity.id}
+            amenity={amenity}
+            onPress={(amenity) => setSearchQuery(amenity.name)}
+          />
+        ))}
+      </ScrollView>
+    );
+  }, [amenities, setSearchQuery]);
+
+  const renderSearchBar = useCallback(() => {
+    return (
       <ThemedView style={styles.searchContainer}>
         <ThemedView
           style={[
@@ -217,7 +239,14 @@ export default function FacilityListScreen() {
             </TouchableOpacity>
           )}
         </ThemedView>
+        {renderBubbles()}
       </ThemedView>
+    );
+  }, [colorScheme, renderBubbles, searchQuery, setSearchQuery]);
+
+  return (
+    <ThemedView style={styles.container}>
+      {renderSearchBar()}
       <FlashList
         data={facilities}
         renderItem={renderFacilityItem}
@@ -439,5 +468,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     opacity: 0.6,
     fontWeight: "500",
+  },
+  bubblesContainer: {
+    gap: 8,
+    paddingVertical: 8,
   },
 });

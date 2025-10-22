@@ -1,5 +1,5 @@
+import type { Amenity, Facility } from "@/services/models/facility.types";
 import * as SQLite from "expo-sqlite";
-import type { Facility } from "@/services/models/facility.types";
 
 // Shared type for database row result
 type FacilityRow = {
@@ -9,6 +9,11 @@ type FacilityRow = {
   latitude: number;
   longitude: number;
   facilities: string | null;
+};
+
+type AmenityRow = {
+  id: number;
+  name: string;
 };
 
 // Shared mapper function to transform row to Facility
@@ -21,6 +26,11 @@ const mapRowToFacility = (row: FacilityRow): Facility => ({
     longitude: row.longitude,
   },
   facilities: row.facilities ? row.facilities.split(",") : [],
+});
+
+const mapRowToAmenity = (row: AmenityRow): Amenity => ({
+  id: row.id,
+  name: row.name,
 });
 
 // Base SQL query for selecting facilities with amenities
@@ -137,4 +147,17 @@ export const runCustomQuery = async (
   const result = await db.getAllAsync(query, ...params);
   console.log("Query Result:", JSON.stringify(result, null, 2));
   return result;
+};
+
+const AMENITY_QUERY = `
+  SELECT 
+    *
+  FROM amenities
+`;
+
+export const getAmenities = async (
+  db: SQLite.SQLiteDatabase
+): Promise<Amenity[]> => {
+  const rows = await db.getAllAsync<AmenityRow>(AMENITY_QUERY);
+  return rows.map(mapRowToAmenity);
 };
